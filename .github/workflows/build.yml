@@ -1,0 +1,33 @@
+# Конвертер текстур - Texture Converter, v3.4, автор Antoñŷ
+# Сборка tc_native.so в облаке GitHub Actions (ничего ставить на свой компьютер не нужно).
+# Положить в репозиторий как .github/workflows/build.yml (см. README, способ Б).
+# Запуск: вкладка Actions, "Build tc_native", кнопка "Run workflow".
+# Результат: артефакт "tc_native-windows" (tc_native.so и licenses).
+name: Build tc_native
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Заголовки и библиотека Ruby от SketchUp
+        shell: pwsh
+        run: git clone --depth 1 https://github.com/SketchUp/ruby-c-extension-examples "$env:RUNNER_TEMP\ruby-c-extension-examples"
+
+      - name: Окружение MSVC x64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Сборка (vcpkg, CMake, проверка dumpbin)
+        shell: pwsh
+        run: ./build_windows.ps1 -VcpkgRoot $env:VCPKG_INSTALLATION_ROOT -RubyExamplesDir "$env:RUNNER_TEMP\ruby-c-extension-examples"
+
+      - name: Сохранить результат
+        uses: actions/upload-artifact@v4
+        with:
+          name: tc_native-windows
+          path: dist/native
+          if-no-files-found: error
